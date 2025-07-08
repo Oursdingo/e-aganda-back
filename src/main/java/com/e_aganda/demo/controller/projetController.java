@@ -52,9 +52,9 @@ public class projetController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int limit
     ) {
-        logger.info("Affichage des projets ");
+        logger.info("Affichage des projets pour l'utilisateur connecté");
 
-        List<Projet> allProjets = projetService.getAllProjet();
+        List<Projet> allProjets = projetService.getProjetsPourUtilisateur();
         int start = (page - 1) * limit;
         int end = Math.min(start + limit, allProjets.size());
         List<Projet> projetsPage = allProjets.subList(start, end);
@@ -83,7 +83,7 @@ public class projetController {
     public ResponseEntity<ProjetDTO> createProjet(@RequestBody ProjetDTO projetDTO) {
         logger.info("Création d’un nouveau projet : {}", projetDTO.getTitre());
         Projet projet = ProjetMapper.toEntity(projetDTO);
-        Projet saved = projetService.saveProjetAvecCollaborateursEtTaches(projet);
+        Projet saved = projetService.saveProjetPourUtilisateur(projet);
         return new ResponseEntity<>(ProjetMapper.toDTO(saved), HttpStatus.CREATED);
     }
 }

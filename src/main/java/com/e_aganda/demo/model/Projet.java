@@ -30,6 +30,10 @@ public class Projet {
     @JsonManagedReference("projet-collaborateurs")
     private List<Collaborateur> collaborateurs = new ArrayList<>();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
     public void addCollaborateur(Collaborateur c) {
         collaborateurs.add(c);
         c.setProjet(this);
@@ -100,5 +104,13 @@ public class Projet {
 
     public void setCollaborateurs(List<Collaborateur> collaborateurs) {
         this.collaborateurs = collaborateurs;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }
