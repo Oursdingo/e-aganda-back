@@ -11,15 +11,17 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.method.P;
+
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Comparator;
 import java.util.List;
 
 @RestController
@@ -35,9 +37,27 @@ public class projetController {
 
 
     @GetMapping("/search")
-    public ResponseEntity<ProjetDTO> searchBook(){
-        return null;
+    public ResponseEntity<ProjetResponseDTO> searchProjets(
+            @RequestParam("query") String query,
+            @RequestParam("userId") Long userId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int limit
+    ) {
+
+        List<Projet> projets = projetService.searchProjets(query, userId);
+        int start = (page - 1) * limit;
+        int end = Math.min(start + limit, projets.size());
+
+        if (projets.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        List<Projet> subProjet = projets.subList(start,end);
+        ProjetResponseDTO projetResponseDTO = new ProjetResponseDTO();
+        projetResponseDTO.setProjets(subProjet);
+        projetResponseDTO.setTotal(subProjet.size());
+        return ResponseEntity.ok(projetResponseDTO);
     }
+
 
 
     @Operation(summary = "Rechercher tous les projets", description = "Rechercher un projet avec ses collaborateurs et tâches.")
@@ -86,4 +106,56 @@ public class projetController {
         Projet saved = projetService.saveProjetPourUtilisateur(projet);
         return new ResponseEntity<>(ProjetMapper.toDTO(saved), HttpStatus.CREATED);
     }
+
+
+    //By ai
+    // Dans votre projetController.java - AJOUTEZ ces méthodes :
+
+    @Operation(summary = "Modifier un projet")
+    @PutMapping("/{id}")
+    public ResponseEntity<ProjetDTO> updateProjet(
+            @PathVariable Long id,
+            @RequestBody @Valid ProjetDTO projetDTO) {
+
+        logger.info("Modification du projet ID: {}", id);
+
+        Projet projetExistant = projetService.getProjetById(id);
+        if (projetExistant == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Projet projetModifie = ProjetMapper.toEntity(projetDTO);
+        projetModifie.setId(id);
+
+        Projet saved = projetService.updateProjet(projetModifie);
+        return ResponseEntity.ok(ProjetMapper.toDTO(saved));
+    }
+
+    @Operation(summary = "Supprimer un projet")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProjet(@PathVariable Long id) {
+        logger.info("Suppression du projet ID: {}", id);
+
+        boolean deleted = projetService.deleteProjet(id);
+        if (deleted) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @Operation(summary = "Obtenir un projet par ID")
+    @GetMapping("/{id}")
+    public ResponseEntity<ProjetDTO> getProjetById(@PathVariable Long id) {
+        logger.info("Récupération du projet ID: {}", id);
+
+        Projet projet = projetService.getProjetById(id);
+        if (projet == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(ProjetMapper.toDTO(projet));
+    }
+
+
+
 }

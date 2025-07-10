@@ -1,6 +1,7 @@
 package com.e_aganda.demo.dto;
 
 import com.e_aganda.demo.model.Statut;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -11,7 +12,9 @@ public class TacheDTO {
     private Long id;
     private String titre;
     private String description;
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate dateDebut;
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate dateFin;
     private Statut statut;
 
