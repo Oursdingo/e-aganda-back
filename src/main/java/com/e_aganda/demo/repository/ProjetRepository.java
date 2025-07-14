@@ -13,10 +13,12 @@ import java.util.Optional;
 @Repository
 public interface ProjetRepository extends JpaRepository<Projet,Long> {
     java.util.List<Projet> findByUser(User user);
+    // Dans ProjetRepository.java
+    // Dans ProjetRepository.java
     @Query("SELECT p FROM Projet p WHERE p.user.id = :userId AND " +
-            "(LOWER(p.titre) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(p.auteur) LIKE LOWER(CONCAT('%', :query, '%')))")
+            "(LOWER(p.titre) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "LOWER(p.auteur) LIKE LOWER(CONCAT('%', :query, '%')))")
     List<Projet> searchByTitreOrAuteurAndUser(@Param("query") String query, @Param("userId") Long userId);
-    // Dans votre ProjetRepository.java - AJOUTEZ cette méthode :
 
     Optional<Projet> findByIdAndUser(Long id, User user);
 

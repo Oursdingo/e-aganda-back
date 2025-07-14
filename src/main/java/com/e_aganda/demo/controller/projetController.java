@@ -36,27 +36,49 @@ public class projetController {
     private static final Logger logger = LoggerFactory.getLogger(projetController.class);
 
 
+    // Dans projetController.java
     @GetMapping("/search")
     public ResponseEntity<ProjetResponseDTO> searchProjets(
             @RequestParam("query") String query,
-            @RequestParam("userId") Long userId,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int limit
     ) {
+        try {
+            logger.info("le nom rechercher dans la base est: {}",query);
+            List<Projet> projets = projetService.searchProjets(query);
 
-        List<Projet> projets = projetService.searchProjets(query, userId);
-        int start = (page - 1) * limit;
-        int end = Math.min(start + limit, projets.size());
+            // Calculer la pagination
+            int totalProjets = projets.size();
+            int start = (page - 1) * limit;
+            int end = Math.min(start + limit, totalProjets);
 
-        if (projets.isEmpty()) {
-            return ResponseEntity.noContent().build();
+            if (start >= totalProjets && totalProjets > 0) {
+                // Page demandée au-delà des résultats
+                ProjetResponseDTO emptyResponse = new ProjetResponseDTO();
+                emptyResponse.setProjets(List.of());
+                emptyResponse.setTotal(totalProjets);
+                emptyResponse.setCurrentPage(page);
+                emptyResponse.setTotalPages((int) Math.ceil((double) totalProjets / limit));
+                return ResponseEntity.ok(emptyResponse);
+            }
+
+            List<Projet> subProjet = projets.subList(start, end);
+
+            ProjetResponseDTO projetResponseDTO = new ProjetResponseDTO();
+            projetResponseDTO.setProjets(subProjet);
+            projetResponseDTO.setTotal(totalProjets);
+            projetResponseDTO.setCurrentPage(page);
+            projetResponseDTO.setTotalPages((int) Math.ceil((double) totalProjets / limit));
+
+            return ResponseEntity.ok(projetResponseDTO);
+
+        } catch (Exception e) {
+            logger.error("Erreur lors de la recherche de projets: " + e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-        List<Projet> subProjet = projets.subList(start,end);
-        ProjetResponseDTO projetResponseDTO = new ProjetResponseDTO();
-        projetResponseDTO.setProjets(subProjet);
-        projetResponseDTO.setTotal(subProjet.size());
-        return ResponseEntity.ok(projetResponseDTO);
     }
+
+
 
 
 
@@ -72,19 +94,30 @@ public class projetController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int limit
     ) {
-        logger.info("Affichage des projets pour l'utilisateur connecté");
+        try {
+            logger.info("Affichage des projets pour l'utilisateur connecté");
 
-        List<Projet> allProjets = projetService.getProjetsPourUtilisateur();
-        int start = (page - 1) * limit;
-        int end = Math.min(start + limit, allProjets.size());
-        List<Projet> projetsPage = allProjets.subList(start, end);
+            List<Projet> allProjets = projetService.getProjetsPourUtilisateur();
+            int totalProjets = allProjets.size();
+            int start = (page - 1) * limit;
+            int end = Math.min(start + limit, totalProjets);
 
-        ProjetResponseDTO response = new ProjetResponseDTO();
-        response.setProjets(projetsPage);
-        response.setTotal(allProjets.size());
+            List<Projet> projetsPage = allProjets.subList(start, end);
 
-        return new ResponseEntity<>(response, HttpStatus.OK);
+            ProjetResponseDTO response = new ProjetResponseDTO();
+            response.setProjets(projetsPage);
+            response.setTotal(totalProjets);
+            response.setCurrentPage(page);  // ⚠️ AJOUT
+            response.setTotalPages((int) Math.ceil((double) totalProjets / limit)); // ⚠️ AJOUT
+
+            return new ResponseEntity<>(response, HttpStatus.OK);
+
+        } catch (Exception e) {
+            logger.error("Erreur lors de la récupération des projets", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
+
 
 
 
@@ -120,6 +153,7 @@ public class projetController {
         logger.info("Modification du projet ID: {}", id);
 
         Projet projetExistant = projetService.getProjetById(id);
+        System.out.println("le projet existant a recuperer: "+projetExistant);
         if (projetExistant == null) {
             return ResponseEntity.notFound().build();
         }
@@ -128,6 +162,7 @@ public class projetController {
         projetModifie.setId(id);
 
         Projet saved = projetService.updateProjet(projetModifie);
+        System.out.println("le projet existant a modifier: "+saved);
         return ResponseEntity.ok(ProjetMapper.toDTO(saved));
     }
 

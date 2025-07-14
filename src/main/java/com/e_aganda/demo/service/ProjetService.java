@@ -62,10 +62,17 @@ public class ProjetService {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
         return projetRepository.findByUser(user).stream().sorted(Comparator.comparing(Projet::getTitre)).toList();
     }
-    public List<Projet> searchProjets(String query, Long userId) {
-        List<Projet> projets = projetRepository.searchByTitreOrAuteurAndUser(query, userId);
-        return projets;
+    // Dans ProjetService.java
+    public List<Projet> searchProjets(String query) { // Sans userId
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+        logger.info("La valeur de l'id du compte rechercher est :{}",user.getId());
+        return projetRepository.searchByTitreOrAuteurAndUser(query, user.getId());
     }
+
+
     //by ai
     // Dans votre ProjetService.java - AJOUTEZ ces méthodes :
 

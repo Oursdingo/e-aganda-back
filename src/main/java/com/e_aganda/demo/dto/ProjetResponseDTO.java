@@ -8,6 +8,24 @@ import java.util.List;
 public class ProjetResponseDTO {
     private List<Projet> projets;
     private long total;
+    private int currentPage;  // ⚠️ Vérifiez que ce champ existe
+    private int totalPages;
+
+    public int getCurrentPage() {
+        return currentPage;
+    }
+
+    public void setCurrentPage(int currentPage) {
+        this.currentPage = currentPage;
+    }
+
+    public int getTotalPages() {
+        return totalPages;
+    }
+
+    public void setTotalPages(int totalPages) {
+        this.totalPages = totalPages;
+    }
 
     public List<Projet> getProjets() {
         return projets;
