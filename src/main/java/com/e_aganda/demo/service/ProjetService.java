@@ -1,6 +1,7 @@
 package com.e_aganda.demo.service;
 
 import com.e_aganda.demo.dto.ProjetDTO;
+import com.e_aganda.demo.model.Collaborateur;
 import com.e_aganda.demo.model.Projet;
 import com.e_aganda.demo.model.User;
 import com.e_aganda.demo.repository.ProjetRepository;
@@ -25,7 +26,8 @@ public class ProjetService {
     private ProjetRepository projetRepository;
     @Autowired
     private UserRepository userRepository;
-
+    @Autowired
+    private EmailService emailService;
     private static final Logger logger = LoggerFactory.getLogger(ProjetService.class);
 
     @Transactional
@@ -53,7 +55,19 @@ public class ProjetService {
                 tache.setCollaborateur(collaborateur);
             });
         });
-        return projetRepository.save(projet);
+        Projet savedProjet =  projetRepository.save(projet);
+        try{
+            // Envoi d'email de notification aux collaborateurs
+            emailService.envoyerNotificationPourProjets(savedProjet.getCollaborateurs(), savedProjet);
+            logger.info("Email de notification envoyé pour le projet : {}", savedProjet.getTitre());
+        } catch (Exception e) {
+            logger.warn("Erreur lors de l'envoi des emails pour le projet {}: {}",
+                    savedProjet.getTitre(), e.getMessage());
+            // On ne fait pas échouer la transaction si l'email ratelogger.warn("Erreur lors de l'envoi des emails pour le projet {}: {}",
+            //                       savedProjet.getTitre(), e.getMessage());
+            //            // On ne fait pas échouer la transaction si l'email rate
+        }
+        return savedProjet;
     }
 
     public List<Projet> getProjetsPourUtilisateur() {
@@ -95,6 +109,10 @@ public class ProjetService {
 
         projet.setUser(user);
 
+        // Récupérer l'ancien projet pour comparer les collaborateurs
+        Projet ancienProjet = projetRepository.findByIdAndUser(projet.getId(), user)
+                .orElseThrow(() -> new RuntimeException("Projet non trouvé"));
+
         // Gérer les collaborateurs et tâches
         projet.getCollaborateurs().forEach(collaborateur -> {
             collaborateur.setProjet(projet);
@@ -103,7 +121,23 @@ public class ProjetService {
             });
         });
 
-        return projetRepository.save(projet);
+        Projet saveProjet = projetRepository.save(projet);
+        try {
+            List<String> anciensEmails = ancienProjet.getCollaborateurs().stream()
+                    .map(Collaborateur::getEmail)
+                    .toList();
+            List<Collaborateur> nouveauxCollaborateurs = saveProjet.getCollaborateurs().stream()
+                    .filter(c -> !anciensEmails.contains(c.getEmail()))
+                    .toList();
+            if (!nouveauxCollaborateurs.isEmpty()) {
+                emailService.envoyerNotificationPourProjets(nouveauxCollaborateurs,saveProjet);
+                logger.info("Email de notification envoyé pour les nouveaux collaborateurs du projet : {}", saveProjet.getTitre());
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return saveProjet;
     }
 
     @Transactional
