@@ -11,6 +11,9 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+/**
+ * TODO-5: l'email doit enoyer la tache du collaborateur
+ */
 
 @Service
 public class EmailService {

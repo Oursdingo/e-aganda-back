@@ -92,4 +92,16 @@ public class Collaborateur {
     public void setTaches(List<Tache> taches) {
         this.taches = taches;
     }
+
+    @Override
+    public String toString() {
+        return "Collaborateur{" +
+                "id=" + id +
+                ", nom='" + nom + '\'' +
+                ", prenom='" + prenom + '\'' +
+                ", email='" + email + '\'' +
+                ", projet=" + projet +
+                ", taches=" + taches +
+                '}';
+    }
 }

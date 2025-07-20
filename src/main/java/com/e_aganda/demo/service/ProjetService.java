@@ -107,36 +107,52 @@ public class ProjetService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
-        projet.setUser(user);
-
-        // Récupérer l'ancien projet pour comparer les collaborateurs
+        // ⚠️ IMPORTANT : Vérifier que le projet appartient à l'utilisateur
         Projet ancienProjet = projetRepository.findByIdAndUser(projet.getId(), user)
                 .orElseThrow(() -> new RuntimeException("Projet non trouvé"));
 
-        // Gérer les collaborateurs et tâches
-        projet.getCollaborateurs().forEach(collaborateur -> {
-            collaborateur.setProjet(projet);
-            collaborateur.getTaches().forEach(tache -> {
-                tache.setCollaborateur(collaborateur);
-            });
-        });
+        // ⚠️ CORRECTION : Sauvegarder les anciens emails AVANT la modification
+        List<String> anciensEmails = ancienProjet.getCollaborateurs().stream()
+                .map(Collaborateur::getEmail)
+                .toList();
 
+        // ⚠️ IMPORTANT : Définir l'utilisateur sur le projet modifié
+        projet.setUser(user);
+
+        // ⚠️ CORRECTION : La cascade ALL devrait gérer automatiquement les relations
+        // Mais on s'assure que les relations bidirectionnelles sont bien établies
+        if (projet.getCollaborateurs() != null) {
+            projet.getCollaborateurs().forEach(collaborateur -> {
+                collaborateur.setProjet(projet);
+                if (collaborateur.getTaches() != null) {
+                    collaborateur.getTaches().forEach(tache -> {
+                        tache.setCollaborateur(collaborateur);
+                    });
+                }
+            });
+        }
+
+        // ⚠️ CORRECTION : Sauvegarder directement - JPA gère les cascades
         Projet saveProjet = projetRepository.save(projet);
+
         try {
-            List<String> anciensEmails = ancienProjet.getCollaborateurs().stream()
-                    .map(Collaborateur::getEmail)
-                    .toList();
+            // Identifier les nouveaux collaborateurs
             List<Collaborateur> nouveauxCollaborateurs = saveProjet.getCollaborateurs().stream()
                     .filter(c -> !anciensEmails.contains(c.getEmail()))
                     .toList();
+
             if (!nouveauxCollaborateurs.isEmpty()) {
-                emailService.envoyerNotificationPourProjets(nouveauxCollaborateurs,saveProjet);
-                logger.info("Email de notification envoyé pour les nouveaux collaborateurs du projet : {}", saveProjet.getTitre());
+                emailService.envoyerNotificationPourProjets(nouveauxCollaborateurs, saveProjet);
+                logger.info("Email de notification envoyé pour les nouveaux collaborateurs du projet : {}",
+                        saveProjet.getTitre());
             }
 
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            logger.warn("Erreur lors de l'envoi des emails pour le projet {}: {}",
+                    saveProjet.getTitre(), e.getMessage());
+            // On ne fait pas échouer la transaction si l'email rate
         }
+
         return saveProjet;
     }
 

@@ -153,16 +153,27 @@ public class projetController {
         logger.info("Modification du projet ID: {}", id);
 
         Projet projetExistant = projetService.getProjetById(id);
-        System.out.println("le projet existant a recuperer: "+projetExistant);
+
+        // ⚠️ CORRECTION CRITIQUE : Supprimer cette ligne qui cause StackOverflowError
+        // System.out.println("le projet existant a recuperer: "+projetExistant);
+
         if (projetExistant == null) {
+            logger.warn("Projet avec ID {} non trouvé", id);
             return ResponseEntity.notFound().build();
         }
 
+        // ⚠️ IMPORTANT : S'assurer que l'ID est bien défini dans le DTO
+        projetDTO.setId(id);
+
         Projet projetModifie = ProjetMapper.toEntity(projetDTO);
-        projetModifie.setId(id);
 
         Projet saved = projetService.updateProjet(projetModifie);
-        System.out.println("le projet existant a modifier: "+saved);
+
+        // ⚠️ CORRECTION CRITIQUE : Supprimer cette ligne aussi
+        // System.out.println("le projet existant a modifier: "+saved);
+
+        logger.info("Projet modifié avec succès - ID: {}, Titre: {}", saved.getId(), saved.getTitre());
+
         return ResponseEntity.ok(ProjetMapper.toDTO(saved));
     }
 
