@@ -1,6 +1,9 @@
 package com.e_aganda.demo.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ProjetDTO {
@@ -8,7 +11,9 @@ public class ProjetDTO {
     private String auteur;
     private String titre;
     private String description;
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate dateDebut;
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate dateFin;
     private List<CollaborateurDTO> collaborateurs;
 
@@ -18,6 +23,7 @@ public class ProjetDTO {
 
     public void setId(Long id) {
         this.id = id;
+
     }
 
     public String getAuteur() {

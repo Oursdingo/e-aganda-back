@@ -98,4 +98,17 @@ public class Tache {
     public void setCollaborateur(Collaborateur collaborateur) {
         this.collaborateur = collaborateur;
     }
+
+    @Override
+    public String toString() {
+        return "Tache{" +
+                "id=" + id +
+                ", titre='" + titre + '\'' +
+                ", description='" + description + '\'' +
+                ", dateDebut=" + dateDebut +
+                ", dateFin=" + dateFin +
+                ", statut=" + statut +
+                ", collaborateur=" + collaborateur +
+                '}';
+    }
 }
