@@ -37,7 +37,7 @@ public class EmailService {
                             "Description du projet : %s\n" +
                             "Période : %s - %s\n\n" +
                             "Cordialement,\n" +
-                            "L'équipe Switch Maker",
+                            "L'équipe Switch Maker:By Sawadogo Adam Sharif",
                     collaborateur.getPrenom(),
                     collaborateur.getNom(),
                     projet.getTitre(),

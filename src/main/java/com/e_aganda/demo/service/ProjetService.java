@@ -44,7 +44,7 @@ public class ProjetService {
     }
 
     @Transactional
-    public Projet saveProjetPourUtilisateur(Projet projet) {
+    public Projet  saveProjetPourUtilisateur(Projet projet) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
